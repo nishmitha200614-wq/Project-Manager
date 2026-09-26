@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+    <title>{{ task.title }} - Project Manager</title>
+
+    <style>
+
+        * {
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            margin: 0;
+            background: #f4f6f9;
+            color: #1f2937;
+        }
+
+        .navbar {
+            background: #172554;
+            color: white;
+            padding: 18px 40px;
+
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .brand {
+            font-size: 22px;
+            font-weight: bold;
+        }
+
+        .navbar a {
+            color: white;
+            text-decoration: none;
+            margin-left: 20px;
+        }
+
+        .container {
+            width: 90%;
+            max-width: 900px;
+            margin: 40px auto;
+        }
+
+        .card {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,.08);
+            margin-bottom: 25px;
+        }
+
+        h1 {
+            color: #172554;
+            margin-top: 0;
+        }
+
+        .description {
+            color: #6b7280;
+            line-height: 1.6;
+        }
+
+        .info {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            margin-top: 20px;
+        }
+
+        .badge {
+            background: #eef2ff;
+            color: #3730a3;
+            padding: 8px 14px;
+            border-radius: 20px;
+            font-size: 14px;
+        }
+
+        .comments-title {
+            color: #172554;
+        }
+
+        .comment {
+            border-bottom: 1px solid #e5e7eb;
+            padding: 15px 0;
+        }
+
+        .comment:last-child {
+            border-bottom: none;
+        }
+
+        .comment-user {
+            font-weight: bold;
+            color: #2563eb;
+        }
+
+        .comment-date {
+            font-size: 12px;
+            color: #9ca3af;
+            margin-left: 8px;
+        }
+
+        .comment-message {
+            margin-top: 7px;
+            line-height: 1.5;
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 120px;
+            padding: 13px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            resize: vertical;
+            font-size: 15px;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: #2563eb;
+        }
+
+        button {
+            margin-top: 12px;
+            padding: 12px 22px;
+            border: none;
+            border-radius: 8px;
+            background: #2563eb;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #1d4ed8;
+        }
+
+        .back {
+            display: inline-block;
+            color: #2563eb;
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        .empty {
+            color: #9ca3af;
+            padding: 20px 0;
+        }
+
+    </style>
+
+</head>
+
+
+<body>
+
+
+<!-- NAVBAR -->
+
+<div class="navbar">
+
+    <div class="brand">
+        📋 Project Manager
+    </div>
+
+    <div>
+
+        <a href="{% url 'home' %}">
+            Dashboard
+        </a>
+
+        <a href="{% url 'project_detail' task.project.id %}">
+            Project Board
+        </a>
+
+        <a href="{% url 'logout' %}">
+            Logout
+        </a>
+
+    </div>
+
+</div>
+
+
+<div class="container">
+
+
+    <!-- TASK DETAILS -->
+
+    <div class="card">
+
+        <h1>
+            {{ task.title }}
+        </h1>
+
+        <div class="description">
+
+            {% if task.description %}
+
+                {{ task.description }}
+
+            {% else %}
+
+                No description provided.
+
+            {% endif %}
+
+        </div>
+
+
+        <div class="info">
+
+            <span class="badge">
+                Project: {{ task.project.name }}
+            </span>
+
+
+            <span class="badge">
+
+                Status:
+
+                {% if task.status == 'todo' %}
+                    To Do
+                {% elif task.status == 'progress' %}
+                    In Progress
+                {% else %}
+                    Completed
+                {% endif %}
+
+            </span>
+
+
+            <span class="badge">
+
+                Assigned:
+
+                {% if task.assigned_to %}
+                    {{ task.assigned_to.username }}
+                {% else %}
+                    Unassigned
+                {% endif %}
+
+            </span>
+
+        </div>
+
+    </div>
+
+
+    <!-- COMMENTS -->
+
+    <div class="card">
+
+        <h2 class="comments-title">
+            💬 Comments
+        </h2>
+
+
+        {% for comment in comments %}
+
+            <div class="comment">
+
+                <span class="comment-user">
+                    {{ comment.user.username }}
+                </span>
+
+                <span class="comment-date">
+                    {{ comment.created_at|date:"d M Y, H:i" }}
+                </span>
+
+                <div class="comment-message">
+                    {{ comment.message }}
+                </div>
+
+            </div>
+
+        {% empty %}
+
+            <div class="empty">
+                No comments yet. Start the conversation!
+            </div>
+
+        {% endfor %}
+
+    </div>
+
+
+    <!-- ADD COMMENT -->
+
+    <div class="card">
+
+        <h2 class="comments-title">
+            Add a Comment
+        </h2>
+
+        <form
+            method="POST"
+            action="{% url 'add_comment' task.id %}"
+        >
+
+            {% csrf_token %}
+
+            <textarea
+                name="message"
+                placeholder="Write your comment..."
+                required
+            ></textarea>
+
+            <button type="submit">
+                💬 Post Comment
+            </button>
+
+        </form>
+
+    </div>
+
+
+    <a
+        href="{% url 'project_detail' task.project.id %}"
+        class="back"
+    >
+        ← Back to Project Board
+    </a>
+
+
+</div>
+
+
+</body>
+
+</html>

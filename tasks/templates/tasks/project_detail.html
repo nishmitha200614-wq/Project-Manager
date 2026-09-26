@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+    <title>{{ project.name }} - Project Manager</title>
+
+    <style>
+
+        * {
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            margin: 0;
+            background: #f4f6f9;
+            color: #1f2937;
+        }
+
+        .navbar {
+            background: #172554;
+            color: white;
+            padding: 18px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .brand {
+            font-size: 22px;
+            font-weight: bold;
+        }
+
+        .navbar a {
+            color: white;
+            text-decoration: none;
+            margin-left: 20px;
+        }
+
+        .container {
+            width: 94%;
+            max-width: 1400px;
+            margin: 35px auto;
+        }
+
+        .project-header {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            margin-bottom: 25px;
+            box-shadow: 0 4px 15px rgba(0,0,0,.07);
+        }
+
+        .project-header h1 {
+            margin: 0 0 10px;
+            color: #172554;
+        }
+
+        .project-header p {
+            color: #6b7280;
+        }
+
+        .add-task {
+            display: inline-block;
+            background: #2563eb;
+            color: white;
+            padding: 12px 20px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        .board {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+        }
+
+        .column {
+            background: #e5e7eb;
+            border-radius: 15px;
+            padding: 15px;
+            min-height: 400px;
+        }
+
+        .column h2 {
+            margin-top: 5px;
+            font-size: 18px;
+        }
+
+        .todo h2 {
+            color: #374151;
+        }
+
+        .progress h2 {
+            color: #2563eb;
+        }
+
+        .done h2 {
+            color: #15803d;
+        }
+
+        .task-card {
+            background: white;
+            border-radius: 10px;
+            padding: 16px;
+            margin-top: 12px;
+            box-shadow: 0 3px 10px rgba(0,0,0,.08);
+        }
+
+        .task-card h3 {
+            margin: 0 0 8px;
+        }
+
+        .task-card p {
+            color: #6b7280;
+            font-size: 14px;
+        }
+
+        .task-card a {
+            text-decoration: none;
+            color: #2563eb;
+            font-weight: bold;
+        }
+
+        .status-form {
+            margin-top: 12px;
+        }
+
+        select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+        }
+
+        button {
+            width: 100%;
+            margin-top: 8px;
+            padding: 8px;
+            border: none;
+            border-radius: 6px;
+            background: #172554;
+            color: white;
+            cursor: pointer;
+        }
+
+        .empty {
+            color: #9ca3af;
+            text-align: center;
+            padding: 30px 10px;
+        }
+
+        @media (max-width: 900px) {
+
+            .board {
+                grid-template-columns: 1fr;
+            }
+
+        }
+
+        
+        .add-task-btn {
+            display: inline-block;
+            padding: 14px 24px;
+            background: #2563eb;
+            color: white;
+            text-decoration: none;
+            border-radius: 10px;
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        .add-task-btn:hover {
+            background: #1d4ed8;
+        }
+
+    </style>
+
+</head>
+
+<body>
+
+
+<div class="navbar">
+
+    <div class="brand">
+        📋 Project Manager
+    </div>
+
+    <div>
+
+        <a href="{% url 'home' %}">
+            Dashboard
+        </a>
+
+        <a href="{% url 'profile' %}">
+            Profile
+        </a>
+
+        <a href="{% url 'logout' %}">
+            Logout
+        </a>
+
+    </div>
+
+</div>
+
+
+<div class="container">
+
+
+    <!-- PROJECT HEADER -->
+
+    <div class="project-header">
+
+        <h1>
+            📁 {{ project.name }}
+        </h1>
+
+        <p>
+            {{ project.description|default:"No description provided." }}
+        </p>
+
+        <a href="{% url 'create_task' project.id %}" class="add-task-btn">
+    + Add Task
+</a>
+
+    </div>
+
+
+    <!-- KANBAN BOARD -->
+
+    <div class="board">
+
+
+        <!-- TO DO -->
+
+        <div class="column todo">
+
+            <h2>
+                📌 To Do
+                ({{ todo_tasks.count }})
+            </h2>
+
+            {% for task in todo_tasks %}
+
+                <div class="task-card">
+
+                    <h3>
+                        {{ task.title }}
+                    </h3>
+
+                    <p>
+                        {{ task.description|truncatewords:20 }}
+                    </p>
+
+                    {% if task.assigned_to %}
+
+                        <small>
+                            👤 {{ task.assigned_to.username }}
+                        </small>
+
+                    {% else %}
+
+                        <small>
+                            👤 Unassigned
+                        </small>
+
+                    {% endif %}
+
+                    <br><br>
+
+                    <a href="{% url 'task_detail' task.id %}">
+                        View Task →
+                    </a>
+
+                    <form
+                        method="POST"
+                        action="{% url 'change_task_status' task.id %}"
+                        class="status-form"
+                    >
+
+                        {% csrf_token %}
+
+                        <select name="status">
+
+                            <option value="todo" selected>
+                                To Do
+                            </option>
+
+                            <option value="progress">
+                                In Progress
+                            </option>
+
+                            <option value="done">
+                                Completed
+                            </option>
+
+                        </select>
+
+                        <button type="submit">
+                            Update Status
+                        </button>
+
+                    </form>
+
+                </div>
+
+            {% empty %}
+
+                <div class="empty">
+                    No tasks here yet.
+                </div>
+
+            {% endfor %}
+
+        </div>
+
+
+        <!-- IN PROGRESS -->
+
+        <div class="column progress">
+
+            <h2>
+                🔄 In Progress
+                ({{ progress_tasks.count }})
+            </h2>
+
+            {% for task in progress_tasks %}
+
+                <div class="task-card">
+
+                    <h3>
+                        {{ task.title }}
+                    </h3>
+
+                    <p>
+                        {{ task.description|truncatewords:20 }}
+                    </p>
+
+                    {% if task.assigned_to %}
+
+                        <small>
+                            👤 {{ task.assigned_to.username }}
+                        </small>
+
+                    {% else %}
+
+                        <small>
+                            👤 Unassigned
+                        </small>
+
+                    {% endif %}
+
+                    <br><br>
+
+                    <a href="{% url 'task_detail' task.id %}">
+                        View Task →
+                    </a>
+
+                    <form
+                        method="POST"
+                        action="{% url 'change_task_status' task.id %}"
+                        class="status-form"
+                    >
+
+                        {% csrf_token %}
+
+                        <select name="status">
+
+                            <option value="todo">
+                                To Do
+                            </option>
+
+                            <option value="progress" selected>
+                                In Progress
+                            </option>
+
+                            <option value="done">
+                                Completed
+                            </option>
+
+                        </select>
+
+                        <button type="submit">
+                            Update Status
+                        </button>
+
+                    </form>
+
+                </div>
+
+            {% empty %}
+
+                <div class="empty">
+                    No tasks in progress.
+                </div>
+
+            {% endfor %}
+
+        </div>
+
+
+        <!-- COMPLETED -->
+
+        <div class="column done">
+
+            <h2>
+                ✅ Completed
+                ({{ done_tasks.count }})
+            </h2>
+
+            {% for task in done_tasks %}
+
+                <div class="task-card">
+
+                    <h3>
+                        {{ task.title }}
+                    </h3>
+
+                    <p>
+                        {{ task.description|truncatewords:20 }}
+                    </p>
+
+                    {% if task.assigned_to %}
+
+                        <small>
+                            👤 {{ task.assigned_to.username }}
+                        </small>
+
+                    {% else %}
+
+                        <small>
+                            👤 Unassigned
+                        </small>
+
+                    {% endif %}
+
+                    <br><br>
+
+                    <a href="{% url 'task_detail' task.id %}">
+                        View Task →
+                    </a>
+
+                    <form
+                        method="POST"
+                        action="{% url 'change_task_status' task.id %}"
+                        class="status-form"
+                    >
+
+                        {% csrf_token %}
+
+                        <select name="status">
+
+                            <option value="todo">
+                                To Do
+                            </option>
+
+                            <option value="progress">
+                                In Progress
+                            </option>
+
+                            <option value="done" selected>
+                                Completed
+                            </option>
+
+                        </select>
+
+                        <button type="submit">
+                            Update Status
+                        </button>
+
+                    </form>
+
+                </div>
+
+            {% empty %}
+
+                <div class="empty">
+                    No completed tasks.
+                </div>
+
+            {% endfor %}
+
+        </div>
+
+
+    </div>
+
+</div>
+
+</body>
+</html>
